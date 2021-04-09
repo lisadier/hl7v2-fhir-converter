@@ -35,7 +35,6 @@ import io.github.linuxforhealth.hl7.expression.variable.VariableGenerator;
 public class ExpressionAttributes {
   private static final String OBJECT_TYPE = Object.class.getSimpleName();
 
-
   // Basic properties of an expression
   private String type;
   private String defaultValue;
@@ -55,8 +54,6 @@ public class ExpressionAttributes {
   // if valueof attribute ends with * then list of values will be generated
   private boolean generateMultiple;
 
-
-
   // Property specific to ValueExtractionGeneralExpression
   private ImmutablePair<String, String> fetch;
 
@@ -69,28 +66,23 @@ public class ExpressionAttributes {
 
     this.defaultValue = exBuilder.defaultValue;
 
-
     this.isRequired = exBuilder.isRequired;
     this.specs = getSpecList(exBuilder.rawSpecs, exBuilder.useGroup);
     if (StringUtils.isNotBlank(exBuilder.rawCondition)) {
       this.condition = ConditionUtil.createCondition(exBuilder.rawCondition);
     }
 
-
     this.constants = new HashMap<>();
     if (exBuilder.constants != null && !exBuilder.constants.isEmpty()) {
       this.constants.putAll(exBuilder.constants);
     }
-
 
     this.variables = new ArrayList<>();
     if (exBuilder.rawVariables != null) {
       for (Entry<String, String> e : exBuilder.rawVariables.entrySet()) {
         this.variables.add(VariableGenerator.parse(e.getKey(), e.getValue()));
       }
-
     }
-
 
     this.value = exBuilder.value;
     this.valueOf = exBuilder.valueOf;
@@ -104,101 +96,86 @@ public class ExpressionAttributes {
       this.expressionType = ExpressionType.HL7SPEC;
     }
 
-
   }
 
   public boolean isUseGroup() {
     return useGroup;
   }
 
-
   public String getType() {
     return type;
   }
-
-
 
   public String getDefaultValue() {
     return defaultValue;
   }
 
-
-
   public boolean isRequired() {
     return isRequired;
   }
-
-
 
   public List<Specification> getSpecs() {
     return ImmutableList.copyOf(specs);
   }
 
-
-
   public List<Variable> getVariables() {
     return ImmutableList.copyOf(variables);
   }
-
-
 
   public Condition getFilter() {
     return condition;
   }
 
-
-
   public Map<String, String> getConstants() {
     return ImmutableMap.copyOf(constants);
   }
-
-
 
   public boolean isGenerateMultiple() {
     return generateMultiple;
   }
 
-
-
   public String getValue() {
     return value;
   }
-
-
 
   public ImmutablePair<String, String> getFetch() {
     return fetch;
   }
 
-
-
   public ExpressionType getExpressionType() {
     return expressionType;
   }
-
 
   public String getValueOf() {
     return valueOf;
   }
 
-
   public static List<Specification> getSpecList(String inputString, boolean useGroup) {
-    final boolean extractMultiple;
+    boolean extractMultiple = false;
+    boolean retainEmpty = false;
     String hl7SpecExpression = inputString;
     if (StringUtils.endsWith(inputString, "*")) {
       hl7SpecExpression = StringUtils.removeEnd(inputString, "*");
       extractMultiple = true;
-    } else {
-      extractMultiple = false;
+    }
+    if (StringUtils.endsWith(inputString, "&")) {
+        hl7SpecExpression = StringUtils.removeEnd(inputString, "&");
+        retainEmpty = true;
+    }
+    if (StringUtils.endsWith(inputString, "*")) {
+        hl7SpecExpression = StringUtils.removeEnd(inputString, "*");
+        extractMultiple = true;
     }
 
+    final boolean finalExtractMultiple = extractMultiple;
+    final boolean finalRetainEmpty = retainEmpty;
     hl7SpecExpression = StringUtils.strip(hl7SpecExpression);
     List<Specification> specs = new ArrayList<>();
     if (StringUtils.isNotBlank(hl7SpecExpression)) {
       StringTokenizer st = new StringTokenizer(hl7SpecExpression, "|").setIgnoreEmptyTokens(true)
           .setTrimmerMatcher(StringMatcherFactory.INSTANCE.spaceMatcher());
       st.getTokenList()
-          .forEach(s -> specs.add(SpecificationParser.parse(s, extractMultiple, useGroup)));
+          .forEach(s -> specs.add(SpecificationParser.parse(s, finalExtractMultiple, useGroup, finalRetainEmpty)));
     }
 
     return specs;
@@ -219,7 +196,6 @@ public class ExpressionAttributes {
     } else {
       return null;
     }
-
   }
 
   @Override
@@ -228,15 +204,11 @@ public class ExpressionAttributes {
       this.toString = ReflectionToStringBuilder.toString(this, ToStringStyle.NO_CLASS_NAME_STYLE,
           false, false, true, null);
     }
-
     return this.toString;
   }
 
 
   public static class Builder {
-
-
-
     private String type;
     private String defaultValue;
     private boolean isRequired;
@@ -261,8 +233,6 @@ public class ExpressionAttributes {
     public boolean isUseGroup() {
       return useGroup;
     }
-
-
 
     public Builder withType(String type) {
       this.type = type;
@@ -294,12 +264,10 @@ public class ExpressionAttributes {
       return this;
     }
 
-
     public Builder withVars(Map<String, String> rawVariables) {
       this.rawVariables = rawVariables;
       return this;
     }
-
 
     public Builder withConstants(Map<String, String> constants) {
       this.constants = constants;
@@ -307,21 +275,17 @@ public class ExpressionAttributes {
     }
 
     public Builder withValueOf(String valueOf) {
-
       this.valueOf = StringUtils.trim(valueOf);
       if (this.expressionType == null) {
         this.expressionType = ExpressionType.SIMPLE;
       }
       return this;
-
     }
 
     public Builder withExpressionType(String expressionType) {
       this.expressionType = EnumUtils.getEnumIgnoreCase(ExpressionType.class, expressionType);
       return this;
     }
-
-
 
     public Builder withValue(String value) {
       this.value = value;
@@ -333,8 +297,6 @@ public class ExpressionAttributes {
       this.generateList = generateList;
       return this;
     }
-
-
 
     public ExpressionAttributes build() {
       return new ExpressionAttributes(this);
