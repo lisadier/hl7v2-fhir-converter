@@ -155,18 +155,6 @@ public class ExpressionAttributes {
   public static final String RETAIN_EMPTY = "retainEmpty";
   public static final String HL7_SPEC_EXPRESSION = "hl7SpecExpression";
 
-/*  public static Class ExpressionModifiers {
-    boolean extractMultiple = false;
-    boolean retainEmpty = false;
-    String hl7SpecExpression = "";
-
-    ExpressionModifiers(boolean theExtractMultiple, boolean theRetainEmpty, String theHl7SpecExpression) {
-      extractMultiple = theExtractMultiple;
-      retainEmpty = theRetainEmpty;
-      hl7SpecExpression = theHl7SpecExpression;
-    }
-  }*/
-
   /**
    * Extract special chars:
    *      * indicates to extract fields from multiple entries
@@ -183,46 +171,22 @@ public class ExpressionAttributes {
     if (StringUtils.endsWith(expression, "*")) {
       expression = StringUtils.removeEnd(expression, "*");
       extractMultiple = true;
-//      retVal.put(EXTRACT_MULTIPLE, true);
     }
     if (StringUtils.endsWith(expression, "&")) {
       expression = StringUtils.removeEnd(expression, "&");
       retainEmpty = true;
-//      retVal.put(RETAIN_EMPTY, true);
     }
     // Repeat check for asterisk to allow for different order of special chars
     if (StringUtils.endsWith(expression, "*")) {
       expression = StringUtils.removeEnd(expression, "*");
       extractMultiple = true;
-//      retVal.put(EXTRACT_MULTIPLE, true);
     }
     expression = StringUtils.strip(expression);
-//    retVal.put(HL7_SPEC_EXPRESSION, hl7SpecExpression);
 
     return new ExpressionModifiers(extractMultiple, retainEmpty, expression);
   }
 
   public static List<Specification> getSpecList(String inputString, boolean useGroup) {
-    /*boolean extractMultiple = false;
-    boolean retainEmpty = false;
-    String hl7SpecExpression = inputString;
-    if (StringUtils.endsWith(inputString, "*")) {
-      hl7SpecExpression = StringUtils.removeEnd(inputString, "*");
-      extractMultiple = true;
-    }
-    if (StringUtils.endsWith(inputString, "&")) {
-        hl7SpecExpression = StringUtils.removeEnd(inputString, "&");
-        retainEmpty = true;
-    }
-    // Repeat check for asterisk to allow for different order of special chars
-    if (StringUtils.endsWith(inputString, "*")) {
-        hl7SpecExpression = StringUtils.removeEnd(inputString, "*");
-        extractMultiple = true;
-    }
-
-    final boolean finalExtractMultiple = extractMultiple;
-    final boolean finalRetainEmpty = retainEmpty;
-    hl7SpecExpression = StringUtils.strip(hl7SpecExpression);*/
 
     ExpressionModifiers exp = extractExpressionModifiers(inputString);
 
@@ -360,10 +324,11 @@ public class ExpressionAttributes {
 
   }
 
+  // Class used when extracting modifiers from the expression, contains the expression and booleans for
   public static class ExpressionModifiers {
-    public boolean extractMultiple = false;
-    public boolean retainEmpty = false;
-    public String expression = "";
+    public boolean extractMultiple = false;  // true when * is used in the expression
+    public boolean retainEmpty = false;      // true when & is used in the expression
+    public String expression = "";           // resulting expression after the modifiers have been removed
 
     ExpressionModifiers(boolean theExtractMultiple, boolean theRetainEmpty, String theExpression) {
       extractMultiple = theExtractMultiple;
