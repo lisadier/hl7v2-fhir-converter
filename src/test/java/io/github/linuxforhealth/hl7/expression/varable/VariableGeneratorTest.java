@@ -50,8 +50,8 @@ public class VariableGeneratorTest {
 	  ExpressionVariable v = (ExpressionVariable) VariableGenerator.parse(varName, variableExpression);	
 	  
 	  Assert.assertTrue("Variable name not set correctly", v.getVariableName().equalsIgnoreCase(varName));
-	  Assert.assertTrue("Variable spec not set correctly", v.getSpec().get(0).equalsIgnoreCase("OBX-5"));
-	  Assert.assertTrue("Variable expression not set correctly", v.getExpression().equalsIgnoreCase("GeneralUtils.testFunction(x,y)"));
+	  Assert.assertTrue("Variable spec not set correctly", v.getSpec().get(0).equalsIgnoreCase("OBX.5"));
+	  Assert.assertTrue("Variable expression not set correctly", v.getExpression().equalsIgnoreCase(" GeneralUtils.testFunction(x, y)"));
 	  Assert.assertTrue("Variable extract multiple should be true", v.extractMultiple());
   }
 }
