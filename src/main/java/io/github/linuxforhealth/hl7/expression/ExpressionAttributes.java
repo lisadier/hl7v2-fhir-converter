@@ -150,32 +150,47 @@ public class ExpressionAttributes {
     return valueOf;
   }
 
-  public static List<Specification> getSpecList(String inputString, boolean useGroup) {
+  /**
+   * Extract special chars:
+   *      * indicates to extract fields from multiple entries
+   *      & indicates to retain empty (null) fields
+   * @param inputString
+   * @return ExpressionModifiers object with booleans indicating which modifiers were used and the expression after modifiers have been removed
+   */
+  public static final ExpressionModifiers extractExpressionModifiers(String inputString) {
+
     boolean extractMultiple = false;
     boolean retainEmpty = false;
-    String hl7SpecExpression = inputString;
-    if (StringUtils.endsWith(inputString, "*")) {
-      hl7SpecExpression = StringUtils.removeEnd(inputString, "*");
+    String expression = inputString;
+
+    if (StringUtils.endsWith(expression, "*")) {
+      expression = StringUtils.removeEnd(expression, "*");
       extractMultiple = true;
     }
-    if (StringUtils.endsWith(inputString, "&")) {
-        hl7SpecExpression = StringUtils.removeEnd(inputString, "&");
-        retainEmpty = true;
+    if (StringUtils.endsWith(expression, "&")) {
+      expression = StringUtils.removeEnd(expression, "&");
+      retainEmpty = true;
     }
-    if (StringUtils.endsWith(inputString, "*")) {
-        hl7SpecExpression = StringUtils.removeEnd(inputString, "*");
-        extractMultiple = true;
+    // Repeat check for asterisk to allow for different order of special chars
+    if (StringUtils.endsWith(expression, "*")) {
+      expression = StringUtils.removeEnd(expression, "*");
+      extractMultiple = true;
     }
+    expression = StringUtils.strip(expression);
 
-    final boolean finalExtractMultiple = extractMultiple;
-    final boolean finalRetainEmpty = retainEmpty;
-    hl7SpecExpression = StringUtils.strip(hl7SpecExpression);
+    return new ExpressionModifiers(extractMultiple, retainEmpty, expression);
+  }
+
+  public static List<Specification> getSpecList(String inputString, boolean useGroup) {
+
+    ExpressionModifiers exp = extractExpressionModifiers(inputString);
+
     List<Specification> specs = new ArrayList<>();
-    if (StringUtils.isNotBlank(hl7SpecExpression)) {
-      StringTokenizer st = new StringTokenizer(hl7SpecExpression, "|").setIgnoreEmptyTokens(true)
+    if (StringUtils.isNotBlank(exp.expression)) {
+      StringTokenizer st = new StringTokenizer(exp.expression, "|").setIgnoreEmptyTokens(true)
           .setTrimmerMatcher(StringMatcherFactory.INSTANCE.spaceMatcher());
       st.getTokenList()
-          .forEach(s -> specs.add(SpecificationParser.parse(s, finalExtractMultiple, useGroup, finalRetainEmpty)));
+          .forEach(s -> specs.add(SpecificationParser.parse(s, exp.extractMultiple, useGroup, exp.retainEmpty)));
     }
 
     return specs;
@@ -302,6 +317,20 @@ public class ExpressionAttributes {
       return new ExpressionAttributes(this);
     }
 
+  }
+
+  // Class used when extracting modifiers from the expression, contains the expression after modifiers have been removed and
+  // booleans indicating which modifiers were in the expression.
+  public static class ExpressionModifiers {
+    public boolean extractMultiple = false;  // true when * is used in the expression
+    public boolean retainEmpty = false;      // true when & is used in the expression
+    public String expression = "";           // resulting expression after the modifiers have been removed
+
+    ExpressionModifiers(boolean theExtractMultiple, boolean theRetainEmpty, String theExpression) {
+      extractMultiple = theExtractMultiple;
+      retainEmpty = theRetainEmpty;
+      expression = theExpression;
+    }
   }
 }
 

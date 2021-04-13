@@ -24,13 +24,13 @@ resources:
 
       
     - resourceName: Encounter
-      segment: PATIENT_RESULT.PATIENT.PV1
+      segment: .PV1
+      group: PATIENT_RESULT.PATIENT.VISIT
       resourcePath: resource/Encounter
       isReferenced: true
       repeats: false
       additionalSegments:
-             - PV2
-             - EVN
+          - .PV2
       
     - resourceName: Observation
       segment: .OBSERVATION.OBX
@@ -39,7 +39,18 @@ resources:
       repeats: true
       isReferenced: true
       additionalSegments: 
-             - .OBR
+          - .OBR
+          - .OBSERVATION.NTE
+        
+    - resourceName: Specimen
+      segment: .SPECIMEN.SPM
+      group: PATIENT_RESULT.ORDER_OBSERVATION
+      resourcePath: resource/Specimen
+      repeats: true
+      isReferenced: true
+      additionalSegments:
+          - .OBSERVATION.OBX
+          - .OBSERVATION.NTE
       
     - resourceName: DiagnosticReport
       segment: .OBR
@@ -47,5 +58,6 @@ resources:
       resourcePath: resource/DiagnosticReport
       repeats: true
       additionalSegments:
-             - .OBSERVATION.OBX
-             - .ORC
+          - .ORC
+          - .NTE
+          - .OBSERVATION.OBX
