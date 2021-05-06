@@ -9,12 +9,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.DateFormat;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.Base64;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 
@@ -29,6 +29,7 @@ import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.ResourceType;
 import org.junit.Assert;
 import org.junit.Test;
+
 import io.github.linuxforhealth.fhir.FHIRContext;
 import io.github.linuxforhealth.hl7.ConverterOptions;
 import io.github.linuxforhealth.hl7.ConverterOptions.Builder;
@@ -42,7 +43,7 @@ public class Hl7ORUMessageTest {
           .withValidateResource()
           .withPrettyPrint()
           .build();
-
+  
   @Test
   public void test_oru() throws IOException {
     String hl7message =
@@ -95,8 +96,6 @@ public class Hl7ORUMessageTest {
     List<Reference> performerRef = diag.getResultsInterpreter();
     assertThat(performerRef.get(0).isEmpty()).isFalse();
   }
-
-
 
   @Test
   public void test_oru_multiple() throws IOException {
@@ -187,10 +186,6 @@ public class Hl7ORUMessageTest {
   	HL7ToFHIRConverter ftv = new HL7ToFHIRConverter();
       String json = ftv.convert(new File("../hl7v2-fhir-converter/src/test/resources/ORU-multiline-short.hl7"), OPTIONS_PRETTYPRINT);
       
-      System.out.println("-----------------------------------------------------");
-      System.out.println(json);
-      System.out.println("-----------------------------------------------------");
-      
       //Verify conversion
       FHIRContext context = new FHIRContext();
       IBaseResource bundleResource = context.getParser().parseResource(json);
@@ -239,18 +234,22 @@ public class Hl7ORUMessageTest {
       Assert.assertTrue("Incorrect content type", a.getContentType().equalsIgnoreCase("text"));
       Assert.assertTrue("Incorrect language", a.getLanguage().equalsIgnoreCase("en"));
       
-      //TODO: Validate data by decoding
-      //Assert.assertTrue("Incorrect data", Base64.getDecoder().decode((a.getData())).equals("~[PII] Emergency Department~ED Encounter Arrival Date: [ADDRESS] [PERSONALNAME]:~"));
-      //Base64.getEncoder().encodeToString(val.getBytes());
-      
+      //Verify data attachment after decoding
+      String decoded = new String(Base64.getDecoder().decode(a.getDataElement().getValueAsString()));
+      Assert.assertTrue("Incorrect data", decoded.equals("~[PII] Emergency Department~ED Encounter Arrival Date: [ADDRESS] [PERSONALNAME]:~"));
+
       Assert.assertTrue("Incorrect title", a.getTitle().equalsIgnoreCase("ECHO CARDIOGRAM COMPLETE"));
 
-      //TODO: validate date 
-//      System.out.println(OffsetDateTime.of(2020, 8, 2, 12, 44, 55, 0, ZoneOffset.of("+08:00")));
-//      Assert.assertTrue("Incorrect creation date", a.getCreation().equals("2020-08-02T12.44:55+08.00"));
+      //Verify creation data is persisted correctly - 2020-08-02T12:44:55+08:00
+      Calendar c = Calendar.getInstance();
+      c.clear();
+      c.set(2020,  7,  2,  12, 44,  55);
+      c.setTimeZone(TimeZone.getTimeZone(ZoneId.of("+08:00")));
       
+      Date d = c.getTime();
+      Assert.assertTrue("Incorrect creation date", a.getCreation().equals(d));
   }
-   
+    
   private static DiagnosticReport getResource(Resource resource) {
     String s = context.getParser().encodeResourceToString(resource);
     Class<? extends IBaseResource> klass = DiagnosticReport.class;
